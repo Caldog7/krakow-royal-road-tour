@@ -18,7 +18,7 @@
     --line: #e2d8c6;
     --accent: #9b2c2c;
     --accent-ink: #fffdf8;
-    --gold: #b7862b;
+    --gold: #8a6418;
   }
   :root[data-theme="dark"] {
     --bg: #1a1612;
@@ -56,7 +56,7 @@
     border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
     aspect-ratio: 4 / 3; background: var(--surface);
   }
-  #map { width: 100%; height: 100%; }
+  #map { width: 100%; height: 100%; display: grid; place-items: center; color: var(--muted); }
   .pin {
     width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
     background: var(--accent); color: var(--accent-ink); border: 2px solid var(--surface);
@@ -107,7 +107,7 @@
     <div class="eyebrow">Walking audio tour</div>
     <h1>Kraków's Royal Road</h1>
     <p class="lede">Follow the route Polish kings took to their coronations, from Plac Matejki through the Old Town to Wawel Hill. Press play when you reach each stop.</p>
-    <div class="meta">5 stops · about 1.5 km · roughly 27 minutes of audio</div>
+    <div class="meta">5 stops · about 1.9 km · roughly 27 minutes of audio</div>
   </header>
 
   <section class="map" aria-label="Route map">
@@ -227,24 +227,12 @@ STOPS.forEach((s, i) => {
     li.classList.remove("playing");
   });
   audio.addEventListener("ended", () => { range.value = 0; });
-  btn.addEventListener("click", () => audio.paused ? audio.play() : audio.pause());
+  btn.addEventListener("click", () => audio.paused ? audio.play().catch(() => {}) : audio.pause());
+  audio.addEventListener("error", () => { dur.textContent = "Audio failed to load"; });
   range.addEventListener("input", () => {
     if (audio.duration) audio.currentTime = range.value / 100 * audio.duration;
   });
 });
-
-const map = L.map("map", { scrollWheelZoom: false });
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-}).addTo(map);
-const line = L.polyline(ROUTE, { color: "#9b2c2c", weight: 5, opacity: .85 }).addTo(map);
-STOPS.forEach((s, i) => {
-  L.marker(s.ll, { icon: L.divIcon({ className: "", html: `<div class="pin">${i + 1}</div>`, iconSize: [28, 28] }) })
-    .addTo(map)
-    .bindPopup(`<a href="#stop-${i + 1}">${i + 1}. ${s.name}</a>`);
-});
-map.fitBounds(line.getBounds(), { padding: [24, 24] });
 
 const root = document.documentElement;
 const toggle = document.getElementById("themeToggle");
@@ -257,6 +245,23 @@ let saved = "light";
 try { saved = localStorage.getItem("theme") || "light"; } catch (e) {}
 setTheme(saved);
 toggle.addEventListener("click", () => setTheme(root.dataset.theme === "dark" ? "light" : "dark"));
+
+if (window.L && typeof ROUTE !== "undefined") {
+  const map = L.map("map", { scrollWheelZoom: false });
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+  const line = L.polyline(ROUTE, { color: "#9b2c2c", weight: 5, opacity: .85 }).addTo(map);
+  STOPS.forEach((s, i) => {
+    L.marker(s.ll, { icon: L.divIcon({ className: "", html: `<div class="pin">${i + 1}</div>`, iconSize: [28, 28] }) })
+      .addTo(map)
+      .bindPopup(`<a href="#stop-${i + 1}">${i + 1}. ${s.name}</a>`);
+  });
+  map.fitBounds(line.getBounds(), { padding: [24, 24] });
+} else {
+  document.getElementById("map").textContent = "Map unavailable. Use the Google Maps link below.";
+}
 </script>
 </body>
 </html>
