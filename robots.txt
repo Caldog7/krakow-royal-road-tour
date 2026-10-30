@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://caldog7.github.io/krakow-royal-road-tour/sitemap.xml
