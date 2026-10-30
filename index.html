@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root {
     --bg: #f6f1e7;
@@ -55,7 +56,12 @@
     border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
     aspect-ratio: 4 / 3; background: var(--surface);
   }
-  .map-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+  #map { width: 100%; height: 100%; }
+  .pin {
+    width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink); border: 2px solid var(--surface);
+    font: 700 14px "Source Sans 3", sans-serif; box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  }
   .map-link {
     display: inline-block; margin-top: 10px; color: var(--accent);
     font-weight: 600; text-decoration: none;
@@ -106,11 +112,7 @@
 
   <section class="map" aria-label="Route map">
     <div class="map-frame">
-      <iframe
-        title="Walking route from Plac Matejki to Wawel"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"
-        src="https://maps.google.com/maps?saddr=50.06655,19.94224&daddr=50.06546,19.94145+to:50.0617,19.93735+to:50.058,19.9378+to:50.05475,19.93611&dirflg=w&output=embed"></iframe>
+      <div id="map" role="img" aria-label="Map of the walking route from Plac Matejki to Wawel"></div>
     </div>
     <a class="map-link" target="_blank" rel="noopener"
        href="https://www.google.com/maps/dir/?api=1&origin=50.06655,19.94224&destination=50.05475,19.93611&waypoints=50.06546,19.94145%7C50.0617,19.93735%7C50.058,19.9378&travelmode=walking">
@@ -122,33 +124,40 @@
   <footer>Narration scripted from historical sources gathered for this tour. Where sources disagree, the audio says so.</footer>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="route.js"></script>
 <script>
 const STOPS = [
   {
+    ll: [50.06655, 19.94224],
     file: "1-plac-matejki.m4a",
     name: "Plac Matejki",
     summary: "The start of the Royal Road, once the marketplace of the separate town of Kleparz. St Florian's Church is where new kings were welcomed before their coronation procession, and where royal funerals set off for Wawel. A young Karol Wojtyła served here as a vicar.",
     look: "The Grunwald Monument, paid for by Paderewski in 1910, blown up by the Germans in 1939–40 and rebuilt in 1976, with the Tomb of the Unknown Soldier at its foot."
   },
   {
+    ll: [50.06546, 19.94145],
     file: "2-barbican-florian-gate.m4a",
     name: "Barbican & Florian Gate",
     summary: "Kraków's old front door. After the Mongol attack of 1241 the city walled itself in, eventually with 47 towers and 8 gates. The round brick Barbican was added around 1498–99 against Ottoman and Tatar raids, and both survived a demolition threat in 1817.",
     look: "Matejko's stone eagle on the gate's north face, St Florian on the south, and the plaque to the man said to have shot a Russian colonel with a coat button."
   },
   {
+    ll: [50.0617, 19.93735],
     file: "3-main-market-square.m4a",
     name: "Main Market Square",
     summary: "The largest medieval market square in Europe, laid out after the 1257 city charter. The Cloth Hall still holds market stalls, with the National Museum's 19th-century Polish art upstairs. Only the tower remains of the Town Hall, saved by public protest in 1820.",
     look: "St Mary's Basilica, where firefighters play the hejnał every hour and break off mid-note. Also the Mickiewicz statue and tiny St Adalbert's Church."
   },
   {
+    ll: [50.058, 19.9378],
     file: "4-grodzka-street.m4a",
     name: "Grodzka Street",
     summary: "One of the oldest streets in Kraków, lined with big churches. Fortified St Andrew's was the only church to hold out against the Mongols in 1241. The Jesuit Church of Saints Peter and Paul has a Foucault pendulum and a National Pantheon in its crypt.",
     look: "Wyspiański's starry blue ceiling and stained glass in the Franciscan church, and the Papal Window of the Bishop's Palace at Franciszkańska 3."
   },
   {
+    ll: [50.05475, 19.93611],
     file: "5-wawel-hill.m4a",
     name: "Wawel Hill",
     summary: "The end of the road: cathedral, castle and a dragon. People have lived on this limestone hill since the Stone Age. Polish kings were crowned in the cathedral, and the Renaissance castle survived fires, partition armies and Nazi occupation.",
@@ -223,6 +232,19 @@ STOPS.forEach((s, i) => {
     if (audio.duration) audio.currentTime = range.value / 100 * audio.duration;
   });
 });
+
+const map = L.map("map", { scrollWheelZoom: false });
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+}).addTo(map);
+const line = L.polyline(ROUTE, { color: "#9b2c2c", weight: 5, opacity: .85 }).addTo(map);
+STOPS.forEach((s, i) => {
+  L.marker(s.ll, { icon: L.divIcon({ className: "", html: `<div class="pin">${i + 1}</div>`, iconSize: [28, 28] }) })
+    .addTo(map)
+    .bindPopup(`<a href="#stop-${i + 1}">${i + 1}. ${s.name}</a>`);
+});
+map.fitBounds(line.getBounds(), { padding: [24, 24] });
 
 const root = document.documentElement;
 const toggle = document.getElementById("themeToggle");
