@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kraków Royal Road</title>
+<meta name="description" content="A five-stop walking audio tour of Kraków's Royal Road, from Plac Matejki to Wawel Hill.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f1e7;
+    --surface: #fffdf8;
+    --ink: #2a2118;
+    --muted: #6b5d4f;
+    --line: #e2d8c6;
+    --accent: #9b2c2c;
+    --accent-ink: #fffdf8;
+    --gold: #b7862b;
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1612;
+    --surface: #24201b;
+    --ink: #efe6d8;
+    --muted: #b0a291;
+    --line: #3a332b;
+    --accent: #e0736b;
+    --accent-ink: #1a1612;
+    --gold: #d9a948;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.6 "Source Sans 3", system-ui, sans-serif;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 64px; }
+  header { padding: 40px 0 8px; position: relative; }
+  .eyebrow { color: var(--gold); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; }
+  h1, h2 { font-family: "Cormorant", Georgia, serif; line-height: 1.15; margin: 0; }
+  h1 { font-size: clamp(34px, 8vw, 52px); margin: 6px 0 12px; }
+  .lede { color: var(--muted); margin: 0 0 8px; max-width: 56ch; }
+  .meta { color: var(--muted); font-size: 15px; }
+  .theme-toggle {
+    position: absolute; top: 16px; right: 0;
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer;
+  }
+  section.map { margin: 28px 0 8px; }
+  .map-frame {
+    border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+    aspect-ratio: 4 / 3; background: var(--surface);
+  }
+  .map-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .map-link {
+    display: inline-block; margin-top: 10px; color: var(--accent);
+    font-weight: 600; text-decoration: none;
+  }
+  .map-link:hover { text-decoration: underline; }
+  ol.stops { list-style: none; padding: 0; margin: 28px 0 0; counter-reset: stop; }
+  .stop {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 20px; margin-bottom: 16px;
+  }
+  .stop.playing { border-color: var(--accent); }
+  .stop-head { display: flex; gap: 14px; align-items: center; }
+  .num {
+    flex: none; width: 40px; height: 40px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--ink); color: var(--bg);
+    font-family: "Cormorant", Georgia, serif; font-weight: 700;
+  }
+  h2 { font-size: 27px; }
+  .stop-head .dur { color: var(--muted); font-size: 14px; }
+  .stop p { margin: 12px 0 0; }
+  .look { color: var(--muted); font-size: 15px; }
+  .look strong { color: var(--ink); font-weight: 600; }
+  .player { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+  .play {
+    flex: none; width: 52px; height: 52px; border-radius: 50%; border: 0;
+    background: var(--accent); color: var(--accent-ink); cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .play svg { width: 22px; height: 22px; fill: currentColor; }
+  .play:focus-visible, .theme-toggle:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .track { flex: 1; min-width: 0; }
+  .track input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+  .times { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .walk { color: var(--muted); font-size: 14px; text-align: center; margin: -4px 0 12px; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <button class="theme-toggle" type="button" id="themeToggle" aria-label="Toggle dark mode">Dark</button>
+    <div class="eyebrow">Walking audio tour</div>
+    <h1>Kraków's Royal Road</h1>
+    <p class="lede">Follow the route Polish kings took to their coronations, from Plac Matejki through the Old Town to Wawel Hill. Press play when you reach each stop.</p>
+    <div class="meta">5 stops · about 1.5 km · roughly 27 minutes of audio</div>
+  </header>
+
+  <section class="map" aria-label="Route map">
+    <div class="map-frame">
+      <iframe
+        title="Walking route from Plac Matejki to Wawel"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        src="https://maps.google.com/maps?saddr=50.06655,19.94224&daddr=50.06546,19.94145+to:50.0617,19.93735+to:50.058,19.9378+to:50.05475,19.93611&dirflg=w&output=embed"></iframe>
+    </div>
+    <a class="map-link" target="_blank" rel="noopener"
+       href="https://www.google.com/maps/dir/?api=1&origin=50.06655,19.94224&destination=50.05475,19.93611&waypoints=50.06546,19.94145%7C50.0617,19.93735%7C50.058,19.9378&travelmode=walking">
+      Open walking directions in Google Maps →</a>
+  </section>
+
+  <ol class="stops" id="stops"></ol>
+
+  <footer>Narration scripted from historical sources gathered for this tour. Where sources disagree, the audio says so.</footer>
+</div>
+
+<script>
+const STOPS = [
+  {
+    file: "1-plac-matejki.m4a",
+    name: "Plac Matejki",
+    summary: "The start of the Royal Road, once the marketplace of the separate town of Kleparz. St Florian's Church is where new kings were welcomed before their coronation procession, and where royal funerals set off for Wawel. A young Karol Wojtyła served here as a vicar.",
+    look: "The Grunwald Monument, paid for by Paderewski in 1910, blown up by the Germans in 1939–40 and rebuilt in 1976, with the Tomb of the Unknown Soldier at its foot."
+  },
+  {
+    file: "2-barbican-florian-gate.m4a",
+    name: "Barbican & Florian Gate",
+    summary: "Kraków's old front door. After the Mongol attack of 1241 the city walled itself in, eventually with 47 towers and 8 gates. The round brick Barbican was added around 1498–99 against Ottoman and Tatar raids, and both survived a demolition threat in 1817.",
+    look: "Matejko's stone eagle on the gate's north face, St Florian on the south, and the plaque to the man said to have shot a Russian colonel with a coat button."
+  },
+  {
+    file: "3-main-market-square.m4a",
+    name: "Main Market Square",
+    summary: "The largest medieval market square in Europe, laid out after the 1257 city charter. The Cloth Hall still holds market stalls, with the National Museum's 19th-century Polish art upstairs. Only the tower remains of the Town Hall, saved by public protest in 1820.",
+    look: "St Mary's Basilica, where firefighters play the hejnał every hour and break off mid-note. Also the Mickiewicz statue and tiny St Adalbert's Church."
+  },
+  {
+    file: "4-grodzka-street.m4a",
+    name: "Grodzka Street",
+    summary: "One of the oldest streets in Kraków, lined with big churches. Fortified St Andrew's was the only church to hold out against the Mongols in 1241. The Jesuit Church of Saints Peter and Paul has a Foucault pendulum and a National Pantheon in its crypt.",
+    look: "Wyspiański's starry blue ceiling and stained glass in the Franciscan church, and the Papal Window of the Bishop's Palace at Franciszkańska 3."
+  },
+  {
+    file: "5-wawel-hill.m4a",
+    name: "Wawel Hill",
+    summary: "The end of the road: cathedral, castle and a dragon. People have lived on this limestone hill since the Stone Age. Polish kings were crowned in the cathedral, and the Renaissance castle survived fires, partition armies and Nazi occupation.",
+    look: "The bones hanging outside the cathedral door, Sigismund's Bell in the tower, and the Dragon's Den beneath the hill."
+  }
+];
+
+const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>';
+const PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></svg>';
+const fmt = s => isFinite(s) ? Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0") : "0:00";
+
+const list = document.getElementById("stops");
+const players = [];
+
+STOPS.forEach((s, i) => {
+  const li = document.createElement("li");
+  li.className = "stop";
+  li.id = "stop-" + (i + 1);
+  li.innerHTML = `
+    <div class="stop-head">
+      <div class="num">${i + 1}</div>
+      <div><h2>${s.name}</h2><div class="dur">Loading…</div></div>
+    </div>
+    <p>${s.summary}</p>
+    <p class="look"><strong>Look for:</strong> ${s.look}</p>
+    <div class="player">
+      <button class="play" type="button" aria-label="Play ${s.name}">${PLAY}</button>
+      <div class="track">
+        <input type="range" min="0" max="100" step="0.1" value="0" aria-label="Seek ${s.name}">
+        <div class="times"><span class="cur">0:00</span><span class="tot">0:00</span></div>
+      </div>
+    </div>
+    <audio preload="metadata" src="audio/${s.file}"></audio>`;
+  list.appendChild(li);
+  if (i < STOPS.length - 1) {
+    const w = document.createElement("li");
+    w.className = "walk";
+    w.textContent = "↓ walk on to stop " + (i + 2);
+    list.appendChild(w);
+  }
+
+  const audio = li.querySelector("audio");
+  const btn = li.querySelector(".play");
+  const range = li.querySelector("input");
+  const cur = li.querySelector(".cur");
+  const tot = li.querySelector(".tot");
+  const dur = li.querySelector(".dur");
+  players.push(audio);
+
+  audio.addEventListener("loadedmetadata", () => {
+    tot.textContent = fmt(audio.duration);
+    dur.textContent = Math.round(audio.duration / 60) + " min";
+  });
+  audio.addEventListener("timeupdate", () => {
+    cur.textContent = fmt(audio.currentTime);
+    if (audio.duration) range.value = audio.currentTime / audio.duration * 100;
+  });
+  audio.addEventListener("play", () => {
+    players.forEach(p => { if (p !== audio) p.pause(); });
+    btn.innerHTML = PAUSE;
+    btn.setAttribute("aria-label", "Pause " + s.name);
+    li.classList.add("playing");
+  });
+  audio.addEventListener("pause", () => {
+    btn.innerHTML = PLAY;
+    btn.setAttribute("aria-label", "Play " + s.name);
+    li.classList.remove("playing");
+  });
+  audio.addEventListener("ended", () => { range.value = 0; });
+  btn.addEventListener("click", () => audio.paused ? audio.play() : audio.pause());
+  range.addEventListener("input", () => {
+    if (audio.duration) audio.currentTime = range.value / 100 * audio.duration;
+  });
+});
+
+const root = document.documentElement;
+const toggle = document.getElementById("themeToggle");
+function setTheme(t) {
+  root.dataset.theme = t;
+  toggle.textContent = t === "dark" ? "Light" : "Dark";
+  try { localStorage.setItem("theme", t); } catch (e) {}
+}
+let saved = "light";
+try { saved = localStorage.getItem("theme") || "light"; } catch (e) {}
+setTheme(saved);
+toggle.addEventListener("click", () => setTheme(root.dataset.theme === "dark" ? "light" : "dark"));
+</script>
+</body>
+</html>
